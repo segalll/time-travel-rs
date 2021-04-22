@@ -75,6 +75,8 @@ impl Uniforms {
     }
 }
 
+const MAX_TEXTURES: usize = 32;
+
 pub struct Render {
     surface: wgpu::Surface,
     device: wgpu::Device,
@@ -110,7 +112,10 @@ impl Render {
                     label: None,
                     features: wgpu::Features::SAMPLED_TEXTURE_ARRAY_NON_UNIFORM_INDEXING
                         | wgpu::Features::SAMPLED_TEXTURE_BINDING_ARRAY,
-                    limits: wgpu::Limits::default(),
+                    limits: wgpu::Limits {
+                        max_sampled_textures_per_shader_stage: MAX_TEXTURES as u32,
+                        ..wgpu::Limits::default()
+                    },
                 },
                 None,
             ).await.unwrap();
@@ -133,6 +138,9 @@ impl Render {
             usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
         });
 
+        let dummy_bytes = include_bytes!("../../res/textures/dummy.png");
+        let dummy_texture = Texture::from_bytes(&device, &queue, dummy_bytes, "dummy").unwrap();
+
         let mut textures: Vec<texture::Texture> = Vec::new();
         static TEXTURE_DIR: Dir = include_dir!("res/textures/");
         for entry in TEXTURE_DIR.files() {
@@ -141,9 +149,9 @@ impl Render {
             textures.push(t);
         }
 
-        let mut texture_views: Vec<&wgpu::TextureView> = Vec::new();
+        let mut texture_views = [&dummy_texture.view; MAX_TEXTURES];
         for i in 0..textures.len() {
-            texture_views.push(&textures[i].view);
+            texture_views[i] = &textures[i].view;
         }
 
         let sampler = device.create_sampler(
@@ -179,7 +187,7 @@ impl Render {
                             view_dimension: wgpu::TextureViewDimension::D2,
                             sample_type: wgpu::TextureSampleType::Float { filterable: false },
                         },
-                        count: std::num::NonZeroU32::new(32), // hardcoded upper bound
+                        count: std::num::NonZeroU32::new(MAX_TEXTURES as u32), // hardcoded upper bound
                     },
                     wgpu::BindGroupLayoutEntry {
                         binding: 2,
