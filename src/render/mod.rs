@@ -111,9 +111,11 @@ impl Render {
                 &wgpu::DeviceDescriptor {
                     label: None,
                     features: wgpu::Features::SAMPLED_TEXTURE_ARRAY_NON_UNIFORM_INDEXING
-                        | wgpu::Features::SAMPLED_TEXTURE_BINDING_ARRAY,
+                        | wgpu::Features::SAMPLED_TEXTURE_BINDING_ARRAY
+                        | wgpu::Features::PUSH_CONSTANTS,
                     limits: wgpu::Limits {
                         max_sampled_textures_per_shader_stage: MAX_TEXTURES as u32,
+                        max_push_constant_size: 16,
                         ..wgpu::Limits::default()
                     },
                 },
@@ -187,7 +189,7 @@ impl Render {
                             view_dimension: wgpu::TextureViewDimension::D2,
                             sample_type: wgpu::TextureSampleType::Float { filterable: false },
                         },
-                        count: std::num::NonZeroU32::new(MAX_TEXTURES as u32), // hardcoded upper bound
+                        count: std::num::NonZeroU32::new(MAX_TEXTURES as u32),
                     },
                     wgpu::BindGroupLayoutEntry {
                         binding: 2,
@@ -231,7 +233,10 @@ impl Render {
                 bind_group_layouts: &[
                     &sprite_bind_group_layout,
                 ],
-                push_constant_ranges: &[],
+                push_constant_ranges: &[wgpu::PushConstantRange {
+                    stages: wgpu::ShaderStage::FRAGMENT,
+                    range: 0..4,
+                }],
             });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -348,6 +353,7 @@ impl Render {
             render_pass.set_bind_group(0, &self.sprite_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.set_push_constants(wgpu::ShaderStage::FRAGMENT, 0, bytemuck::cast_slice(&[1]));
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
         }
 
