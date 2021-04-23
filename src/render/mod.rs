@@ -147,6 +147,9 @@ impl Render {
         static TEXTURE_DIR: Dir = include_dir!("res/textures/");
         for entry in TEXTURE_DIR.files() {
             let name = entry.path().file_name().unwrap().to_str().unwrap();
+            if name == "dummy.png" {
+                continue;
+            }
             let t = Texture::from_bytes(&device, &queue, entry.contents(), name).unwrap();
             textures.push(t);
         }
@@ -353,7 +356,7 @@ impl Render {
             render_pass.set_bind_group(0, &self.sprite_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.set_push_constants(wgpu::ShaderStage::FRAGMENT, 0, bytemuck::cast_slice(&[1]));
+            render_pass.set_push_constants(wgpu::ShaderStage::FRAGMENT, 0, bytemuck::cast_slice(&[0]));
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
         }
 
