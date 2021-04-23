@@ -7,6 +7,7 @@ use winit::{
     window::Window,
 };
 use wgpu::util::DeviceExt;
+use cgmath::SquareMatrix;
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -63,7 +64,6 @@ struct Uniforms {
 
 impl Uniforms {
     fn new() -> Self {
-        use cgmath::SquareMatrix;
         Self {
             proj: cgmath::Matrix4::identity().into(),
         }
@@ -92,6 +92,8 @@ pub struct Render {
     sprite_bind_group: wgpu::BindGroup,
     uniforms: Uniforms,
     uniform_buffer: wgpu::Buffer,
+    storage_bind_group: wgpu::BindGroup,
+    _storage_buffer: wgpu::Buffer,
 }
 
 impl Render {
@@ -227,6 +229,53 @@ impl Render {
             label: Some("sprite_bind_group"),
         });
 
+        #[repr(C)]
+        #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+        struct Thing {
+            texture_id: u32,
+            model: [[f32; 4]; 4],
+        }
+
+        let thing = Thing { texture_id: 0, model: cgmath::Matrix4::identity().into()};
+        let array = [thing];
+
+        let storage_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            contents: bytemuck::cast_slice(&array),
+            usage: wgpu::BufferUsage::VERTEX
+                | wgpu::BufferUsage::STORAGE
+                | wgpu::BufferUsage::COPY_DST,
+            label: Some("storage_buffer"),
+        });
+
+        let storage_bind_group_layout = device.create_bind_group_layout(
+            &wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStage::VERTEX,
+                        ty: wgpu::BindingType::Buffer {
+                            ty: wgpu::BufferBindingType::Storage { read_only: true },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
+                    }
+                ],
+                label: Some("storage_bind_group_layout"),
+            }
+        );
+
+        let storage_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &storage_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: storage_buffer.as_entire_binding(),
+                },
+            ],
+            label: Some("storage_bind_group"),
+        });
+
         let vs_module = device.create_shader_module(&wgpu::include_spirv!("../../res/shaders/shader.vert.spv"));
         let fs_module = device.create_shader_module(&wgpu::include_spirv!("../../res/shaders/shader.frag.spv"));
 
@@ -235,6 +284,7 @@ impl Render {
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[
                     &sprite_bind_group_layout,
+                    &storage_bind_group_layout,
                 ],
                 push_constant_ranges: &[wgpu::PushConstantRange {
                     stages: wgpu::ShaderStage::FRAGMENT,
@@ -308,6 +358,8 @@ impl Render {
             sprite_bind_group,
             uniforms,
             uniform_buffer,
+            storage_bind_group,
+            _storage_buffer: storage_buffer,
         }
     }
 
@@ -354,6 +406,7 @@ impl Render {
 
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.set_bind_group(0, &self.sprite_bind_group, &[]);
+            render_pass.set_bind_group(1, &self.storage_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
             render_pass.set_push_constants(wgpu::ShaderStage::FRAGMENT, 0, bytemuck::cast_slice(&[0]));
