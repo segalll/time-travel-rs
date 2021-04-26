@@ -12,11 +12,11 @@ uniform Uniforms {
 };
 
 struct Data {
-    uint tex_id;
     mat4 model;
+    uint tex_id;
 };
 
-layout(std140, set = 1, binding = 0)
+layout(std430, set = 1, binding = 0)
 readonly buffer Storage {
     Data data[];
 };

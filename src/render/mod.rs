@@ -75,7 +75,15 @@ impl Uniforms {
     }
 }
 
+#[repr(C)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
+struct Sprite {
+    model: [[f32; 4]; 4],
+    texture_id: u32,
+}
+
 const MAX_TEXTURES: usize = 32;
+const MAX_OBJECTS: usize = 1000;
 
 pub struct Render {
     surface: wgpu::Surface,
@@ -93,7 +101,8 @@ pub struct Render {
     uniforms: Uniforms,
     uniform_buffer: wgpu::Buffer,
     storage_bind_group: wgpu::BindGroup,
-    _storage_buffer: wgpu::Buffer,
+    storage_buffer: wgpu::Buffer,
+    sprites: Vec<Sprite>,
 }
 
 impl Render {
@@ -229,21 +238,9 @@ impl Render {
             label: Some("sprite_bind_group"),
         });
 
-        #[repr(C)]
-        #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
-        struct Thing {
-            texture_id: u32,
-            model: [[f32; 4]; 4],
-        }
-
-        let thing = Thing { texture_id: 0, model: cgmath::Matrix4::identity().into()};
-        let array = [thing];
-
         let storage_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            contents: bytemuck::cast_slice(&array),
-            usage: wgpu::BufferUsage::VERTEX
-                | wgpu::BufferUsage::STORAGE
-                | wgpu::BufferUsage::COPY_DST,
+            contents: &[0; MAX_OBJECTS * std::mem::size_of::<Sprite>()],
+            usage: wgpu::BufferUsage::STORAGE | wgpu::BufferUsage::COPY_DST,
             label: Some("storage_buffer"),
         });
 
@@ -256,7 +253,9 @@ impl Render {
                         ty: wgpu::BindingType::Buffer {
                             ty: wgpu::BufferBindingType::Storage { read_only: true },
                             has_dynamic_offset: false,
-                            min_binding_size: None,
+                            min_binding_size: std::num::NonZeroU64::new(
+                                (MAX_OBJECTS as u64) * (std::mem::size_of::<Sprite>() as u64)
+                            ),
                         },
                         count: None,
                     }
@@ -359,7 +358,8 @@ impl Render {
             uniforms,
             uniform_buffer,
             storage_bind_group,
-            _storage_buffer: storage_buffer,
+            storage_buffer,
+            sprites: vec![],
         }
     }
 
@@ -374,6 +374,24 @@ impl Render {
             0,
             bytemuck::cast_slice(&[self.uniforms]),
         );
+    }
+
+    pub fn add_sprite(&mut self, x: f32, y: f32, texture_id: u32) {
+        self.sprites.push(
+            Sprite {
+                model: cgmath::Matrix4::from_translation(cgmath::vec3(x, y, 0f32)).into(),
+                texture_id,
+            }
+        );
+    }
+
+    pub fn update_storage(&mut self) {
+        self.queue.write_buffer(
+            &self.storage_buffer,
+            0,
+            bytemuck::cast_slice(&self.sprites),
+        );
+        self.sprites.clear();
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {

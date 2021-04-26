@@ -15,6 +15,8 @@ fn main() {
 
     let mut render_state: render::Render = block_on(render::Render::new(&window));
 
+    let mut angle: f32 = 0f32;
+
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {
             ref event,
@@ -38,6 +40,9 @@ fn main() {
             _ => {}
        }
        Event::RedrawRequested(_) => {
+           render_state.add_sprite(0.5 * angle.cos(), 0.5 * angle.sin(), 0);
+           angle += 0.02;
+           render_state.update_storage();
            match render_state.render() {
                Ok(_) => {}
                Err(wgpu::SwapChainError::Lost) => render_state.resize(render_state.size),
