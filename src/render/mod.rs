@@ -421,7 +421,6 @@ impl Render {
             render_pass.set_bind_group(1, &self.storage_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.set_push_constants(wgpu::ShaderStage::FRAGMENT, 0, bytemuck::cast_slice(&[0]));
             render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
         }
 
