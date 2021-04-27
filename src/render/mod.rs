@@ -96,7 +96,6 @@ pub struct Render {
     vertex_buffer: wgpu::Buffer,
     index_buffer: wgpu::Buffer,
     num_indices: u32,
-    _textures: Vec<texture::Texture>,
     sprite_bind_group: wgpu::BindGroup,
     uniforms: Uniforms,
     uniform_buffer: wgpu::Buffer,
@@ -126,7 +125,6 @@ impl Render {
                         | wgpu::Features::PUSH_CONSTANTS,
                     limits: wgpu::Limits {
                         max_sampled_textures_per_shader_stage: MAX_TEXTURES as u32,
-                        max_push_constant_size: 16,
                         ..wgpu::Limits::default()
                     },
                 },
@@ -285,10 +283,7 @@ impl Render {
                     &sprite_bind_group_layout,
                     &storage_bind_group_layout,
                 ],
-                push_constant_ranges: &[wgpu::PushConstantRange {
-                    stages: wgpu::ShaderStage::FRAGMENT,
-                    range: 0..4,
-                }],
+                push_constant_ranges: &[],
             });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
@@ -353,7 +348,6 @@ impl Render {
             vertex_buffer,
             index_buffer,
             num_indices,
-            _textures: textures,
             sprite_bind_group,
             uniforms,
             uniform_buffer,
