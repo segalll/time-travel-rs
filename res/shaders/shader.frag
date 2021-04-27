@@ -1,4 +1,4 @@
-#version 450
+#version 460
 
 layout(location = 0) in vec2 v_tex_coords;
 layout(location = 1) flat in uint v_tex_id;

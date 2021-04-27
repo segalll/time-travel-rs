@@ -370,10 +370,10 @@ impl Render {
         );
     }
 
-    pub fn add_sprite(&mut self, x: f32, y: f32, texture_id: u32) {
+    pub fn add_sprite(&mut self, model: cgmath::Matrix4<f32>, texture_id: u32) {
         self.sprites.push(
             Sprite {
-                model: cgmath::Matrix4::from_translation(cgmath::vec3(x, y, 0f32)).into(),
+                model: model.into(),
                 texture_id,
             }
         );
@@ -385,7 +385,6 @@ impl Render {
             0,
             bytemuck::cast_slice(&self.sprites),
         );
-        self.sprites.clear();
     }
 
     pub fn render(&mut self) -> Result<(), wgpu::SwapChainError> {
@@ -421,10 +420,12 @@ impl Render {
             render_pass.set_bind_group(1, &self.storage_bind_group, &[]);
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..1);
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..(self.sprites.len() as u32));
         }
 
         self.queue.submit(iter::once(encoder.finish()));
+
+        self.sprites.clear();
 
         Ok(())
     }

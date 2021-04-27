@@ -1,10 +1,12 @@
 mod render;
+mod systems;
 
 use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
 };
+use legion::*;
 
 fn main() {
     env_logger::init();
@@ -15,7 +17,10 @@ fn main() {
 
     let mut render_state: render::Render = block_on(render::Render::new(&window));
 
-    let mut angle: f32 = 0f32;
+    let mut world = World::default();
+
+    world.push((systems::Drawable::new(0f32, 0f32, 5), false));
+    world.push((systems::Drawable::new(0f32, 0f32, 5), false));
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {
@@ -25,8 +30,8 @@ fn main() {
             WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
             WindowEvent::KeyboardInput { input, .. } => match input {
                 KeyboardInput {
-                   state: ElementState::Pressed,
-                   virtual_keycode: Some(VirtualKeyCode::Escape),
+                    state: ElementState::Pressed,
+                    virtual_keycode: Some(VirtualKeyCode::Escape),
                    ..
                 } => *control_flow = ControlFlow::Exit,
                 _ => {}
@@ -40,19 +45,23 @@ fn main() {
             _ => {}
        }
        Event::RedrawRequested(_) => {
-           render_state.add_sprite(0.5 * angle.cos(), 0.5 * angle.sin(), 0);
-           angle += 0.02;
-           render_state.update_storage();
-           match render_state.render() {
-               Ok(_) => {}
-               Err(wgpu::SwapChainError::Lost) => render_state.resize(render_state.size),
-               Err(wgpu::SwapChainError::OutOfMemory) => *control_flow = ControlFlow::Exit,
-               Err(e) => eprintln!("{:?}", e),
-           }
+            let mut query = <&systems::Drawable>::query();
+
+            for item in query.iter(&world) {
+                render_state.add_sprite(item.model_matrix(), item.texture_id);
+            }
+            render_state.update_storage();
+
+            match render_state.render() {
+                Ok(_) => {}
+                Err(wgpu::SwapChainError::Lost) => render_state.resize(render_state.size),
+                Err(wgpu::SwapChainError::OutOfMemory) => *control_flow = ControlFlow::Exit,
+                Err(e) => eprintln!("{:?}", e),
+            }
         }
         Event::MainEventsCleared => {
             window.request_redraw();
         }
-       _ => {}
+        _ => {}
     });
 }

@@ -1,4 +1,4 @@
-#version 450
+#version 460
 
 layout(location = 0) in vec3 a_position;
 layout(location = 1) in vec2 a_tex_coords;
@@ -23,6 +23,6 @@ readonly buffer Storage {
 
 void main() {
     v_tex_coords = a_tex_coords;
-    v_tex_id = data[0].tex_id;
+    v_tex_id = data[gl_BaseInstance].tex_id;
     gl_Position = u_proj * data[0].model * vec4(a_position, 1.0);
 }
