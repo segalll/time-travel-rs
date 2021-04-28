@@ -20,8 +20,7 @@ fn main() {
     let mut world = World::default();
 
     world.push((systems::Drawable::new(0f32, 0f32, 1), false));
-    world.push((systems::Drawable::new(0.5, 0.5, 1), false));
-    world.push((systems::Drawable::new(-0.5, -0.5, 1), false));
+    world.push((systems::Drawable::new(0f32, 0f32, 1), false));
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {

@@ -393,10 +393,12 @@ impl Render {
     }
 
     pub fn update_storage(&mut self) {
+        let tmp = [self.sprites.clone(), vec![Sprite::default(); MAX_OBJECTS - self.sprites.len()]].concat();
+
         self.queue.write_buffer(
             &self.storage_buffer,
             0,
-            bytemuck::cast_slice(&self.sprites),
+            bytemuck::cast_slice(&tmp),
         );
     }
 
