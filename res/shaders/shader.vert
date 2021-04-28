@@ -23,6 +23,6 @@ readonly buffer Storage {
 
 void main() {
     v_tex_coords = a_tex_coords;
-    v_tex_id = data[gl_BaseInstance].tex_id;
-    gl_Position = u_proj * data[0].model * vec4(a_position, 1.0);
+    v_tex_id = data[gl_InstanceIndex].tex_id;
+    gl_Position = u_proj * data[gl_InstanceIndex].model * vec4(a_position, 1.0);
 }

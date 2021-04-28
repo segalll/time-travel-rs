@@ -82,6 +82,15 @@ struct Sprite {
     texture_id: u32,
 }
 
+impl Sprite {
+    fn default() -> Self {
+        Self {
+            model: cgmath::Matrix4::identity().into(),
+            texture_id: 0,
+        }
+    }
+}
+
 const MAX_TEXTURES: usize = 32;
 const MAX_OBJECTS: usize = 1000;
 
@@ -237,7 +246,7 @@ impl Render {
         });
 
         let storage_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            contents: &[0; MAX_OBJECTS * std::mem::size_of::<Sprite>()],
+            contents: bytemuck::cast_slice(&[Sprite::default(); MAX_OBJECTS]),
             usage: wgpu::BufferUsage::STORAGE | wgpu::BufferUsage::COPY_DST,
             label: Some("storage_buffer"),
         });
@@ -300,7 +309,11 @@ impl Render {
                 targets: &[wgpu::ColorTargetState {
                     format: sc_desc.format,
                     alpha_blend: wgpu::BlendState::REPLACE,
-                    color_blend: wgpu::BlendState::REPLACE,
+                    color_blend: wgpu::BlendState {
+                        src_factor: wgpu::BlendFactor::SrcAlpha,
+                        dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                        operation: wgpu::BlendOperation::Add,
+                    },
                     write_mask: wgpu::ColorWrite::ALL,
                 }],
             }),
