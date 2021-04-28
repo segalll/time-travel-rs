@@ -80,6 +80,7 @@ impl Uniforms {
 struct Sprite {
     model: [[f32; 4]; 4],
     texture_id: u32,
+    _padding: [u32; 3],
 }
 
 impl Sprite {
@@ -87,6 +88,7 @@ impl Sprite {
         Self {
             model: cgmath::Matrix4::identity().into(),
             texture_id: 0,
+            _padding: [0; 3],
         }
     }
 }
@@ -388,6 +390,7 @@ impl Render {
             Sprite {
                 model: model.into(),
                 texture_id,
+                _padding: [0; 3],
             }
         );
     }
