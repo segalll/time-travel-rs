@@ -1,8 +1,8 @@
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Drawable {
-    position: cgmath::Vector2::<f32>,
-    rotation: cgmath::Vector2::<cgmath::Rad<f32>>,
-    scale: cgmath::Vector2::<f32>,
+    pub position: cgmath::Vector2::<f32>,
+    pub rotation: cgmath::Vector2::<cgmath::Rad<f32>>,
+    pub scale: cgmath::Vector2::<f32>,
     pub texture_id: u32,
 }
 
@@ -22,5 +22,17 @@ impl Drawable {
             * cgmath::Matrix4::from_angle_y(self.rotation.y);
         let scale = cgmath::Matrix4::from_nonuniform_scale(self.scale.x, self.scale.y, 1f32);
         translation * rotation * scale
+    }
+}
+
+pub struct Inputtable {
+    pub speed: f32,
+}
+
+impl Inputtable {
+    pub fn new(speed: f32) -> Self {
+        Self {
+            speed
+        }
     }
 }

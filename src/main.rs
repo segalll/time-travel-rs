@@ -1,5 +1,6 @@
 mod render;
 mod systems;
+mod input;
 
 use winit::{
     event::*,
@@ -17,10 +18,19 @@ fn main() {
 
     let mut render_state: render::Render = block_on(render::Render::new(&window));
 
+    let mut input_state: input::Input = input::Input::new();
+
     let mut world = World::default();
 
-    world.push((systems::Drawable::new(0f32, 0f32, 1), false));
-    world.push((systems::Drawable::new(0.5, 0.5, 0), false));
+    world.push((
+        systems::Drawable::new(0f32, 0f32, 0),
+    ));
+    world.push((
+        systems::Drawable::new(0f32, 0f32, 0),
+        systems::Inputtable::new(0.75),
+    ));
+
+    let mut last_render_time = std::time::Instant::now();
 
     event_loop.run(move |event, _, control_flow| match event {
         Event::WindowEvent {
@@ -32,8 +42,13 @@ fn main() {
                 KeyboardInput {
                     state: ElementState::Pressed,
                     virtual_keycode: Some(VirtualKeyCode::Escape),
-                   ..
+                    ..
                 } => *control_flow = ControlFlow::Exit,
+                KeyboardInput {
+                    state,
+                    virtual_keycode: Some(key),
+                    ..
+                } => input_state.process_keyboard(*key, *state),
                 _ => {}
             },
             WindowEvent::Resized(physical_size) => {
@@ -43,11 +58,33 @@ fn main() {
                 render_state.resize(**new_inner_size);
             }
             _ => {}
-       }
-       Event::RedrawRequested(_) => {
-            let mut query = <&systems::Drawable>::query();
+        }
+        Event::RedrawRequested(_) => {
+            let now = std::time::Instant::now();
+            let dt = now - last_render_time;
+            last_render_time = now;
 
-            for item in query.iter(&world) {
+            let mut input_query = <(&systems::Inputtable, &mut systems::Drawable)>::query();
+
+            for (inputtable, drawable) in input_query.iter_mut(&mut world) {
+                let delta = inputtable.speed * dt.as_secs_f32();
+                if input_state.key_down(VirtualKeyCode::W) {
+                    drawable.position.y += delta;
+                }
+                if input_state.key_down(VirtualKeyCode::S) {
+                    drawable.position.y -= delta;
+                }
+                if input_state.key_down(VirtualKeyCode::A) {
+                    drawable.position.x -= delta;
+                }
+                if input_state.key_down(VirtualKeyCode::D) {
+                    drawable.position.x += delta;
+                }
+            }
+
+            let mut draw_query = <&systems::Drawable>::query();
+
+            for item in draw_query.iter(&world) {
                 render_state.add_sprite(item.model_matrix(), item.texture_id);
             }
             render_state.update_storage();
