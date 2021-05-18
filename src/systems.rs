@@ -25,6 +25,7 @@ impl Drawable {
     }
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Inputtable {
     pub speed: f32,
 }
@@ -33,6 +34,27 @@ impl Inputtable {
     pub fn new(speed: f32) -> Self {
         Self {
             speed
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Animatable {
+    pub frame_id: u32,
+    pub frames_per_anim: u32,
+    pub total_frames: u32,
+    pub frames_since_change: u32,
+    pub texture_offset: u32,
+}
+
+impl Animatable {
+    pub fn new(frames_per_anim: u32, total_frames: u32) -> Self {
+        Self {
+            frame_id: 0,
+            frames_per_anim,
+            total_frames,
+            frames_since_change: 0,
+            texture_offset: 1,
         }
     }
 }

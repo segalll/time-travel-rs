@@ -28,6 +28,7 @@ fn main() {
     world.push((
         systems::Drawable::new(0f32, 0f32, 0),
         systems::Inputtable::new(0.75),
+        systems::Animatable::new(4, 6),
     ));
 
     let mut last_render_time = std::time::Instant::now();
@@ -82,10 +83,22 @@ fn main() {
                 }
             }
 
+            let mut anim_query = <(&mut systems::Animatable, &mut systems::Drawable)>::query();
+
+            for (animatable, drawable) in anim_query.iter_mut(&mut world) {
+                if animatable.frames_since_change >= animatable.frames_per_anim {
+                    animatable.frame_id = (animatable.frame_id + 1) % animatable.total_frames;
+                    animatable.frames_since_change = 0;
+                    drawable.texture_id = animatable.frame_id;
+                } else {
+                    animatable.frames_since_change += 1;
+                }
+            }
+
             let mut draw_query = <&systems::Drawable>::query();
 
-            for item in draw_query.iter(&world) {
-                render_state.add_sprite(item.model_matrix(), item.texture_id);
+            for drawable in draw_query.iter(&world) {
+                render_state.add_sprite(drawable.model_matrix(), drawable.texture_id);
             }
             render_state.update_storage();
 
