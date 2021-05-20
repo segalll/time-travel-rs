@@ -26,14 +26,27 @@ impl Drawable {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub enum PrevMove {
+    None,
+    Left,
+    Right,
+    Up,
+    Down,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Inputtable {
     pub speed: f32,
+    pub prev_move: PrevMove,
+    pub should_change: bool,
 }
 
 impl Inputtable {
     pub fn new(speed: f32) -> Self {
         Self {
-            speed
+            speed,
+            prev_move: PrevMove::None,
+            should_change: false,
         }
     }
 }
