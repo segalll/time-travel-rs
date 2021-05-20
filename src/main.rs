@@ -28,7 +28,7 @@ fn main() {
     world.push((
         systems::Drawable::new(0f32, 0f32, 0),
         systems::Inputtable::new(0.25),
-        systems::Animatable::new(16, 6),
+        systems::Animatable::new(0.15f32, 6),
     ));
 
     let mut last_render_time = std::time::Instant::now();
@@ -86,13 +86,13 @@ fn main() {
             let mut anim_query = <(&mut systems::Animatable, &mut systems::Drawable)>::query();
 
             for (animatable, drawable) in anim_query.iter_mut(&mut world) {
-                if animatable.frames_since_change >= animatable.frames_per_anim {
+                if animatable.delta_since_change >= animatable.frame_delta {
                     animatable.frame_id = (animatable.frame_id + 1) % animatable.total_frames;
                     println!("{}", animatable.frame_id);
-                    animatable.frames_since_change = 0;
+                    animatable.delta_since_change = 0f32;
                     drawable.texture_id = animatable.frame_id + animatable.texture_offset;
                 } else {
-                    animatable.frames_since_change += 1;
+                    animatable.delta_since_change += dt.as_secs_f32();
                 }
             }
 

@@ -41,19 +41,19 @@ impl Inputtable {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Animatable {
     pub frame_id: u32,
-    pub frames_per_anim: u32,
+    pub frame_delta: f32,
     pub total_frames: u32,
-    pub frames_since_change: u32,
+    pub delta_since_change: f32,
     pub texture_offset: u32,
 }
 
 impl Animatable {
-    pub fn new(frames_per_anim: u32, total_frames: u32) -> Self {
+    pub fn new(frame_delta: f32, total_frames: u32) -> Self {
         Self {
             frame_id: 0,
-            frames_per_anim,
+            frame_delta,
             total_frames,
-            frames_since_change: 0,
+            delta_since_change: 0f32,
             texture_offset: 18,
         }
     }
