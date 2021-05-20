@@ -11,7 +11,7 @@ impl Drawable {
         Self {
             position: cgmath::vec2(x, y),
             rotation: cgmath::vec2(cgmath::Rad(0f32), cgmath::Rad(0f32)),
-            scale: cgmath::vec2(1f32, 1f32),
+            scale: cgmath::vec2(0.2f32, 0.2f32),
             texture_id
         }
     }
@@ -54,7 +54,7 @@ impl Animatable {
             frames_per_anim,
             total_frames,
             frames_since_change: 0,
-            texture_offset: 1,
+            texture_offset: 18,
         }
     }
 }

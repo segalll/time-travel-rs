@@ -1,7 +1,7 @@
 mod texture;
 
 use std::iter;
-use include_dir::{include_dir, Dir};
+use include_dir::{Dir, include_dir};
 use texture::Texture;
 use winit::{
     window::Window,
@@ -165,7 +165,13 @@ impl Render {
 
         let mut textures: Vec<texture::Texture> = Vec::new();
         static TEXTURE_DIR: Dir = include_dir!("res/textures/");
-        for entry in TEXTURE_DIR.files() {
+
+        let mut files_vec = TEXTURE_DIR.files().to_vec();
+        files_vec.sort_by(|a, b| {
+            a.path().file_name().unwrap().cmp(b.path().file_name().unwrap())
+        });
+
+        for entry in files_vec {
             let name = entry.path().file_name().unwrap().to_str().unwrap();
             if name == "dummy.png" {
                 continue;
