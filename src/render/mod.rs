@@ -173,7 +173,7 @@ impl Render {
 
         for entry in files_vec {
             let name = entry.path().file_name().unwrap().to_str().unwrap();
-            if name == "dummy.png" {
+            if name == "dummy.png" || &name[name.len() - 4..] != ".png" {
                 continue;
             }
             let t = Texture::from_bytes(&device, &queue, entry.contents(), name).unwrap();
