@@ -58,6 +58,7 @@ pub struct Animatable {
     pub total_frames: u32,
     pub delta_since_change: f32,
     pub texture_offset: u32,
+    pub animating: bool,
 }
 
 impl Animatable {
@@ -68,6 +69,7 @@ impl Animatable {
             total_frames,
             delta_since_change: 0f32,
             texture_offset: 18,
+            animating: false,
         }
     }
 }

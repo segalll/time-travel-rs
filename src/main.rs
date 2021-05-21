@@ -79,7 +79,11 @@ fn main() {
                 }
                 if input_state.key_down(VirtualKeyCode::S) {
                     drawable.position.y -= delta;
-                    new_move = PrevMove::Down;
+                    if new_move != PrevMove::Up {
+                        new_move = PrevMove::Down;
+                    } else {
+                        new_move = PrevMove::None;
+                    }
                 }
                 if input_state.key_down(VirtualKeyCode::A) {
                     drawable.position.x -= delta;
@@ -87,7 +91,11 @@ fn main() {
                 }
                 if input_state.key_down(VirtualKeyCode::D) {
                     drawable.position.x += delta;
-                    new_move = PrevMove::Right;
+                    if new_move != PrevMove::Left {
+                        new_move = PrevMove::Right;
+                    } else {
+                        new_move = PrevMove::None;
+                    }
                 }
                 inputtable.should_change = inputtable.prev_move != new_move;
                 inputtable.prev_move = new_move;
@@ -96,12 +104,16 @@ fn main() {
             let mut input_anim_query = <(&systems::Inputtable, &mut systems::Animatable)>::query();
 
             for (inputtable, animatable) in input_anim_query.iter_mut(&mut world) {
+                animatable.animating = true;
                 animatable.texture_offset = match inputtable.prev_move {
                     PrevMove::Left => 12,
                     PrevMove::Right => 18,
                     PrevMove::Up => 0,
                     PrevMove::Down => 6,
-                    PrevMove::None => animatable.texture_offset
+                    PrevMove::None => {
+                        animatable.animating = false;
+                        animatable.texture_offset - (animatable.texture_offset % animatable.total_frames)
+                    }
                 };
                 if inputtable.prev_move != PrevMove::None && inputtable.should_change {
                     animatable.frame_id = 0;
@@ -112,7 +124,9 @@ fn main() {
             let mut anim_query = <(&mut systems::Animatable, &mut systems::Drawable)>::query();
 
             for (animatable, drawable) in anim_query.iter_mut(&mut world) {
-                if animatable.delta_since_change >= animatable.frame_delta {
+                if !animatable.animating && animatable.frame_id % animatable.total_frames == 0 {
+                    animatable.delta_since_change = 0f32;
+                } else if animatable.delta_since_change >= animatable.frame_delta {
                     animatable.frame_id = (animatable.frame_id + 1) % animatable.total_frames;
                     animatable.delta_since_change = 0f32;
                 } else {
